@@ -10,12 +10,20 @@ import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRates
 import kotlinx.coroutines.launch
 
+data class CurrencyBinaryValue(
+    val prefix: String,
+    val value: String
+)
+
 class MainViewModel(
     private val repository: ExchangeRateRepository
 ) : ViewModel() {
 
     private val _viewState = MutableLiveData<ViewState>()
     val stateViewState: LiveData<ViewState> by ::_viewState
+
+    private val _currencyBinaryFinalValue = MutableLiveData<CurrencyBinaryValue>()
+    val currencyBinaryFinalValue: LiveData<CurrencyBinaryValue> by ::_currencyBinaryFinalValue
 
     var selectedCountry: Country? = null
     private val countries: List<Country> = listOf(
@@ -50,10 +58,30 @@ class MainViewModel(
     }
 
     fun onAmountChanged(amount: String) {
-        if (amount.isBlank()) return
+        val country = selectedCountry ?: return
+        if (amount.isBlank()) {
+            updateCurrentBinary(country.currencyPrefix, "0")
+            return
+        }
         Log.d("TAG", amount.toDecimal().toString())
-        val value = amount.toDecimal() * (selectedCountry?.exchangeRate ?: 1.0f)
-        Log.d("TAG", "$value")
+        val valueInCurrentExchange = amount.toDecimal() * country.exchangeRate
+
+        // TODO float to binary
+        val binaryCurrentExchange = Integer.toBinaryString(valueInCurrentExchange.toInt())
+        updateCurrentBinary(country.currencyPrefix, binaryCurrentExchange)
+    }
+
+    fun onSendAction() {
+        // TODO
+    }
+
+    private fun updateCurrentBinary(prefix: String, value: String) {
+        _currencyBinaryFinalValue.postValue(
+            CurrencyBinaryValue(
+                prefix,
+                value
+            )
+        )
     }
 
     private fun loadExchangeRates(exchangeRates: ExchangeRates) {

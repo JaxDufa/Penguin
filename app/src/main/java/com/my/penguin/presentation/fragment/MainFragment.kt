@@ -6,13 +6,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputLayout
 import com.my.penguin.R
 import com.my.penguin.databinding.FragmentMainBinding
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -49,32 +49,64 @@ class MainFragment : Fragment() {
     }
     // endregion
 
+    // region - Setup
     private fun setupView() {
-        binding.textAmount.editText?.addTextChangedListener(
-            afterTextChanged = {
-                viewModel.onAmountChanged(it.toString())
+        with(binding) {
+            buttonSend.setOnClickListener {
+                viewModel.onSendAction()
             }
-        )
-    }
 
-    private fun setupObservers() {
-        viewModel.stateViewState.observe(viewLifecycleOwner) {
-            when (it) {
-                is ViewState.Complete -> TODO()
-                is ViewState.Initial -> showInitialState(it.countries)
-                is ViewState.Default -> showDefaultState(it.country)
-                is ViewState.Error -> showErrorState(it.type)
-                else -> Unit
-            }
-            Log.d("TAG", "ViewState $it")
-            showLoadingState(it.loading)
+            updateRequiredError(textFirstName, textLastName, textPhoneNumber, textAmount)
+            textAmount.editText?.addTextChangedListener(
+                afterTextChanged = {
+                    viewModel.onAmountChanged(it.toString())
+                }
+            )
         }
     }
 
-    private fun showCurrentCountryRate(rate: Float) {
-//        binding.text.text = rate.toString()
+    private fun updateRequiredError(vararg inputLayouts: TextInputLayout) {
+        inputLayouts.forEach {
+            it.editText?.setOnFocusChangeListener { _, focus ->
+                if (!focus) {
+                    it.updateRequiredError()
+                }
+            }
+        }
     }
 
+    private fun TextInputLayout.updateRequiredError() {
+        if (editText?.text.isNullOrBlank()) {
+            isErrorEnabled = true
+            error = getString(R.string.input_text_required_error)
+        } else {
+            isErrorEnabled = false
+        }
+    }
+
+    private fun setupObservers() {
+        with(viewModel) {
+            stateViewState.observe(viewLifecycleOwner) {
+                when (it) {
+                    is ViewState.Complete -> TODO()
+                    is ViewState.Initial -> showInitialState(it.countries)
+                    is ViewState.Default -> showDefaultState(it.country)
+                    is ViewState.Error -> showErrorState(it.type)
+                    else -> Unit
+                }
+                Log.d("TAG", "ViewState $it")
+                showLoadingState(it.loading)
+            }
+            currencyBinaryFinalValue.observe(viewLifecycleOwner) {
+                binding.textAmount.helperText =
+                    getString(R.string.input_text_amount_helper, it.prefix, it.value)
+                binding.buttonSend.isEnabled = it.value.isNotBlank()
+            }
+        }
+    }
+    // endregion
+
+    // region - States
     private fun showInitialState(countries: List<Country>) {
         val adapter = ArrayAdapter(
             requireContext(),
@@ -83,7 +115,6 @@ class MainFragment : Fragment() {
         )
         (binding.dropdownMenu as? AutoCompleteTextView)?.apply {
             setAdapter(adapter)
-            //setText(countries[0].name, false)
             setOnItemClickListener { _, _, i, _ ->
                 viewModel.onCountrySelected(i)
             }
@@ -94,9 +125,12 @@ class MainFragment : Fragment() {
     private fun showDefaultState(country: Country) {
         with(binding) {
 
+            textAmount.editText?.text?.clear()
             textAmount.helperText =
                 getString(R.string.input_text_amount_helper, country.currencyPrefix, 0)
 
+            textPhoneNumber.prefixText = country.phonePrefix
+            textPhoneNumber.editText?.text?.clear()
             textPhoneNumber.editText?.filters =
                 arrayOf(InputFilter.LengthFilter(country.phoneNumberDigits))
             defaultGroup.isVisible = true
@@ -104,7 +138,6 @@ class MainFragment : Fragment() {
     }
 
     private fun showLoadingState(shouldShow: Boolean) {
-        Log.d("TAG", "Should show loading $shouldShow")
         binding.progressIndicator.isVisible = shouldShow
     }
 
@@ -118,4 +151,5 @@ class MainFragment : Fragment() {
             }
             .show()
     }
+    // endregion
 }

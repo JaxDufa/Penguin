@@ -3,22 +3,24 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:padding="8dp"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="8dp">
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/initialGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="textFirstName,textLastName,textCountry" />
+        app:constraint_referenced_ids="textFirstName,textLastName,textCountry"
+        tools:visibility="visible" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/defaultGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="textPhoneNumber,textAmount" />
+        app:constraint_referenced_ids="textPhoneNumber,textAmount"
+        tools:visibility="visible" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/textFirstName"
@@ -82,7 +84,7 @@
             android:layout_height="wrap_content"
             android:hint="@string/input_text_phone_number_hint"
             android:imeOptions="actionNext"
-            android:inputType="textCapWords" />
+            android:inputType="phone" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
