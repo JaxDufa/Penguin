@@ -9,7 +9,6 @@ class NetworkProvider(private val connectivityManager: ConnectivityManager) {
         get() = connectivityManager.isNetworkAvailable()
 
     private fun ConnectivityManager.isNetworkAvailable(): Boolean {
-
         val capabilities = activeNetwork ?: return false
         val activeNetwork = getNetworkCapabilities(capabilities) ?: return false
 

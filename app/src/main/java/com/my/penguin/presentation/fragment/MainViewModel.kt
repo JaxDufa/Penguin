@@ -1,5 +1,6 @@
 package com.my.penguin.presentation.fragment
 
+import android.telephony.PhoneNumberUtils
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -95,7 +96,12 @@ class MainViewModel(
             )
         } else {
             transaction =
-                Transaction(firstName, lastName, amount, country.phonePrefix, phoneNumber).also {
+                Transaction(
+                    firstName,
+                    lastName,
+                    amount,
+                    "${country.phonePrefix} $phoneNumber"
+                ).also {
                     _viewState.postValue(ViewState.Confirm(it))
                 }
         }
@@ -112,10 +118,13 @@ class MainViewModel(
         lastName: String,
         phoneNumber: String
     ): List<Boolean> {
+        val hasExpectedNumberOfDigits = phoneNumber.length == selectedCountry?.phoneNumberDigits
+        val isValidPhoneNumber =
+            PhoneNumberUtils.isGlobalPhoneNumber("${selectedCountry?.phonePrefix}$phoneNumber")
         return listOf(
             firstName.isNotBlank(),
             lastName.isNotBlank(),
-            phoneNumber.length == selectedCountry?.phoneNumberDigits
+            hasExpectedNumberOfDigits && isValidPhoneNumber
         )
     }
 

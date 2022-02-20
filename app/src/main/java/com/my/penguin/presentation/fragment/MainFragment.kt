@@ -207,8 +207,7 @@ class MainFragment : Fragment() {
             resources.getString(
                 R.string.confirm_message,
                 transaction.amount,
-                transaction.phonePrefix,
-                transaction.phoneNumber
+                transaction.phone
             )
         ).setPositiveButton(resources.getString(R.string.confirm_positive_action)) { _, _ ->
             viewModel.onConfirmAction()
@@ -225,8 +224,7 @@ class MainFragment : Fragment() {
             resources.getString(
                 R.string.transaction_complete_message,
                 transaction.amount,
-                transaction.phonePrefix,
-                transaction.phoneNumber
+                transaction.phone
             )
         ).setPositiveButton(resources.getString(R.string.transaction_positive_action)) { dialog, _ ->
             dialog.dismiss()

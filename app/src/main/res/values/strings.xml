@@ -1,11 +1,10 @@
 <resources>
     <string name="app_name">Penguin</string>
 
-    <string name="input_text_first_name_hint">First Name</string>
-    <string name="input_text_last_name_hint">Last Name</string>
-    <string name="input_text_country_hint">Country</string>
-    <string name="input_text_prefix_hint">Prefix</string>
-    <string name="input_text_phone_number_hint">Phone number</string>
+    <string name="input_text_first_name_hint">Recipient First Name</string>
+    <string name="input_text_last_name_hint">Recipient Last Name</string>
+    <string name="input_text_country_hint">Recipient Country</string>
+    <string name="input_text_phone_number_hint">Recipient Phone number</string>
     <string name="input_text_amount_hint">Amount</string>
 
     <string name="input_text_required_error">Required field</string>
@@ -16,13 +15,13 @@
 
     <!-- Confirm feedback -->
     <string name="confirm_title">Confirm transaction</string>
-    <string name="confirm_message">You want to send %1$s to phone number %2$s %3$s?</string>
+    <string name="confirm_message">You want to send %1$s to phone number %2$s?</string>
     <string name="confirm_positive_action">Send</string>
     <string name="confirm_negative_action">Cancel</string>
 
     <!-- Complete feedback -->
     <string name="transaction_complete_title">Complete!</string>
-    <string name="transaction_complete_message">You just sent %1$s to phone number %2$s %3$s.</string>
+    <string name="transaction_complete_message">You just sent %1$s to phone number %2$s.</string>
     <string name="transaction_positive_action">OK</string>
 
     <!-- Error feedback -->

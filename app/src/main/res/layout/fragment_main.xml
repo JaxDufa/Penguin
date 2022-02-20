@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginBottom="16dp"
         android:fillViewport="true"
+        android:padding="16dp"
         app:layout_constraintBottom_toTopOf="@id/buttonSend"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -130,6 +130,7 @@
         android:id="@+id/buttonSend"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_margin="16dp"
         android:enabled="false"
         android:text="@string/button_send"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -140,6 +141,7 @@
         android:id="@+id/progressIndicatorContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="@color/overlay"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone"
