@@ -1,4 +1,4 @@
-package com.my.penguin.presentation.fragment
+package com.my.penguin.presentation.models
 
 sealed class Country(
     val name: String,
