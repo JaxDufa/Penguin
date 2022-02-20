@@ -25,11 +25,15 @@ class MainViewModel(
     var selectedCountry: Country? = null
 
     init {
+       loadExchangeRates()
+    }
+
+    fun loadExchangeRates() {
         viewModelScope.launch {
             _viewState.postValue(ViewState.Loading)
             when (val result = repository.loadExchangeRates()) {
                 is Result.Success -> postViewState(ViewState.CurrentRate(result.data.toCountryRate()))
-                is Result.Error -> postViewState(ViewState.UnknownError)
+                is Result.Error -> postViewState(ViewState.Error(ErrorType.UnknownError))
             }
         }
     }

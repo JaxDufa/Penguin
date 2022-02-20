@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Penguin</string>
+
+    <string name="unknown_error_title">Unknown Error</string>
+    <string name="unknown_error_message">Something weird happened, please try again in a few minutes.</string>
+
+    <string name="network_error_title">Network Error</string>
+    <string name="network_error_message">Check if your device is currently connected to a Mobile or Wi-Fi network.</string>
+
+    <string name="error_positive_button">Try Again</string>
 </resources>
