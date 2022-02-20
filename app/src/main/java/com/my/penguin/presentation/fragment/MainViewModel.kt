@@ -1,7 +1,6 @@
 package com.my.penguin.presentation.fragment
 
 import android.util.Log
-import android.view.View
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,10 +10,6 @@ import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRates
 import kotlinx.coroutines.launch
 
-enum class Country {
-    KENYA, NIGERIA, TANZANIA, UGANDA
-}
-
 class MainViewModel(
     private val repository: ExchangeRateRepository
 ) : ViewModel() {
@@ -23,32 +18,58 @@ class MainViewModel(
     val stateViewState: LiveData<ViewState> by ::_viewState
 
     var selectedCountry: Country? = null
+    private val countries: List<Country> = listOf(
+        Country.Kenya,
+        Country.Nigeria,
+        Country.Tanzania,
+        Country.Uganda
+    )
 
     init {
-       loadExchangeRates()
+        onTryAgain()
     }
 
-    fun loadExchangeRates() {
+    fun onTryAgain() {
         viewModelScope.launch {
             _viewState.postValue(ViewState.Loading)
             when (val result = repository.loadExchangeRates()) {
-                is Result.Success -> postViewState(ViewState.CurrentRate(result.data.toCountryRate()))
+                is Result.Success -> {
+                    loadExchangeRates(result.data)
+                    postViewState(ViewState.Initial(countries))
+                }
                 is Result.Error -> postViewState(ViewState.Error(ErrorType.UnknownError))
             }
         }
     }
 
-    private fun ExchangeRates.toCountryRate() : Float {
-        return when(selectedCountry) {
-            Country.KENYA -> kenya
-            Country.NIGERIA -> nigeria
-            Country.TANZANIA -> tanzania
-            Country.UGANDA -> uganda
-            null -> 0f
+    fun onCountrySelected(position: Int) {
+        selectedCountry = countries.getOrNull(position)
+        selectedCountry?.let {
+            _viewState.postValue(ViewState.Default(it))
+        }
+    }
+
+    fun onAmountChanged(amount: String) {
+        if (amount.isBlank()) return
+        Log.d("TAG", amount.toDecimal().toString())
+        val value = amount.toDecimal() * (selectedCountry?.exchangeRate ?: 1.0f)
+        Log.d("TAG", "$value")
+    }
+
+    private fun loadExchangeRates(exchangeRates: ExchangeRates) {
+        countries.forEach {
+            it.exchangeRate = when (it) {
+                Country.Kenya -> exchangeRates.kenya
+                Country.Nigeria -> exchangeRates.nigeria
+                Country.Tanzania -> exchangeRates.tanzania
+                Country.Uganda -> exchangeRates.uganda
+            }
         }
     }
 
     private fun postViewState(state: ViewState) {
         _viewState.postValue(state)
     }
+
+    private fun String.toDecimal(): Long = toLong(2)
 }

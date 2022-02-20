@@ -6,7 +6,8 @@ import com.my.penguin.R
 sealed class ViewState(val loading: Boolean = false) {
     object Loading : ViewState(true)
     data class Error(val type: ErrorType) : ViewState()
-    data class CurrentRate(val value: Float) : ViewState()
+    data class Initial(val countries: List<Country>) : ViewState()
+    data class Default(val country: Country) : ViewState()
     data class Complete(val value: Float) : ViewState()
 }
 

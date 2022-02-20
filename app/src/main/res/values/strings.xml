@@ -1,6 +1,16 @@
 <resources>
     <string name="app_name">Penguin</string>
 
+    <string name="input_text_first_name_hint">First Name</string>
+    <string name="input_text_last_name_hint">Last Name</string>
+    <string name="input_text_country_hint">Country</string>
+    <string name="input_text_phone_number_hint">Phone number</string>
+    <string name="input_text_amount_hint">Amount</string>
+
+    <string name="input_text_amount_helper">%1$s: %2$d</string>
+
+    <string name="button_send">Send</string>
+
     <string name="unknown_error_title">Unknown Error</string>
     <string name="unknown_error_message">Something weird happened, please try again in a few minutes.</string>
 

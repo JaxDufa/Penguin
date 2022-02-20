@@ -1,16 +1,22 @@
 package com.my.penguin.presentation.fragment
 
 import android.os.Bundle
+import android.text.InputFilter
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.my.penguin.R
 import com.my.penguin.databinding.FragmentMainBinding
 import org.koin.androidx.viewmodel.ext.android.viewModel
+
 
 class MainFragment : Fragment() {
 
@@ -31,11 +37,10 @@ class MainFragment : Fragment() {
         return binding.root
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        viewModel.selectedCountry = Country.KENYA
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         setupObservers()
+        setupView()
     }
 
     override fun onDestroyView() {
@@ -44,11 +49,20 @@ class MainFragment : Fragment() {
     }
     // endregion
 
+    private fun setupView() {
+        binding.textAmount.editText?.addTextChangedListener(
+            afterTextChanged = {
+                viewModel.onAmountChanged(it.toString())
+            }
+        )
+    }
+
     private fun setupObservers() {
-        viewModel.stateViewState.observe(this) {
+        viewModel.stateViewState.observe(viewLifecycleOwner) {
             when (it) {
                 is ViewState.Complete -> TODO()
-                is ViewState.CurrentRate -> showCurrentCountryRate(it.value)
+                is ViewState.Initial -> showInitialState(it.countries)
+                is ViewState.Default -> showDefaultState(it.country)
                 is ViewState.Error -> showErrorState(it.type)
                 else -> Unit
             }
@@ -58,7 +72,35 @@ class MainFragment : Fragment() {
     }
 
     private fun showCurrentCountryRate(rate: Float) {
-        binding.text.text = rate.toString()
+//        binding.text.text = rate.toString()
+    }
+
+    private fun showInitialState(countries: List<Country>) {
+        val adapter = ArrayAdapter(
+            requireContext(),
+            R.layout.dropdown_menu_item,
+            countries.map { it.name }
+        )
+        (binding.dropdownMenu as? AutoCompleteTextView)?.apply {
+            setAdapter(adapter)
+            //setText(countries[0].name, false)
+            setOnItemClickListener { _, _, i, _ ->
+                viewModel.onCountrySelected(i)
+            }
+        }
+        binding.initialGroup.isVisible = true
+    }
+
+    private fun showDefaultState(country: Country) {
+        with(binding) {
+
+            textAmount.helperText =
+                getString(R.string.input_text_amount_helper, country.currencyPrefix, 0)
+
+            textPhoneNumber.editText?.filters =
+                arrayOf(InputFilter.LengthFilter(country.phoneNumberDigits))
+            defaultGroup.isVisible = true
+        }
     }
 
     private fun showLoadingState(shouldShow: Boolean) {
@@ -72,7 +114,7 @@ class MainFragment : Fragment() {
             .setTitle(resources.getString(errorType.title))
             .setMessage(resources.getString(errorType.message))
             .setPositiveButton(resources.getString(R.string.error_positive_button)) { _, _ ->
-                viewModel.loadExchangeRates()
+                viewModel.onTryAgain()
             }
             .show()
     }
