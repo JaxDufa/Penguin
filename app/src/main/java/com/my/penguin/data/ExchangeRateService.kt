@@ -7,5 +7,5 @@ import retrofit2.http.GET
 interface ExchangeRateService {
 
     @GET("latest.json")
-    suspend fun getExchangeRates(): Response<ExchangeRatesResponse>
+    suspend fun getExchangeRates(): ExchangeRatesResponse
 }

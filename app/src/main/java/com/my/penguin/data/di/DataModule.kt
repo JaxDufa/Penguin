@@ -1,6 +1,7 @@
 package com.my.penguin.data.di
 
 import com.my.penguin.BuildConfig
+import com.my.penguin.data.ExchangeRateRepository
 import com.my.penguin.data.ExchangeRateService
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -13,10 +14,12 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 private const val BASE_URL = BuildConfig.API_URL
 private const val APP_ID_QUERY = "app_id"
 
-val apiModule = module {
+val dataModule = module {
     single { provideOkHttpClient() }
     single { provideRetrofit(get()) }
     single { provideApiService(get()) }
+
+    single { ExchangeRateRepository(get()) }
 }
 
 private fun provideOkHttpClient(): OkHttpClient {

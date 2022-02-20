@@ -1,7 +1,8 @@
 package com.my.penguin
 
 import android.app.Application
-import com.my.penguin.data.di.apiModule
+import com.my.penguin.data.di.dataModule
+import com.my.penguin.presentation.di.viewModelModule
 import org.koin.core.context.GlobalContext.startKoin
 
 class PenguinApplication : Application() {
@@ -16,7 +17,8 @@ class PenguinApplication : Application() {
         startKoin {
             modules(
                 mainModule,
-                apiModule
+                viewModelModule,
+                dataModule
             )
         }
     }
