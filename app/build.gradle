@@ -2,10 +2,14 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-parcelize'
+    id 'kotlin-kapt'
 }
 
 android {
     compileSdk 32
+
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
 
     defaultConfig {
         applicationId "com.my.penguin"
@@ -13,6 +17,9 @@ android {
         targetSdk 32
         versionCode 1
         versionName "1.0"
+
+        buildConfigField "String", "API_URL", "\"https://openexchangerates.org/api/\""
+        buildConfigField "String", "API_KEY", properties.getProperty("api.id", "")
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -45,10 +52,12 @@ dependencies {
 
     // https://github.com/square/moshi/blob/master/CHANGELOG.md
     implementation 'com.squareup.moshi:moshi:1.13.0'
+    kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.13.0'
 
     // https://github.com/square/retrofit/blob/master/CHANGELOG.md
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
 
     // https://github.com/InsertKoinIO/koin/blob/main/CHANGELOG.md
     implementation 'io.insert-koin:koin-core:3.1.5'
