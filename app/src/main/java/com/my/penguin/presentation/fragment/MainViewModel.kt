@@ -56,9 +56,9 @@ class MainViewModel(
                 }
                 is Result.Error -> {
                     if (networkProvide.isConnected) {
-                        postViewState(ViewState.Error(ErrorType.UnknownError))
+                        postViewState(ViewState.GeneralError(ErrorType.UnknownError))
                     } else {
-                        postViewState(ViewState.Error(ErrorType.NetworkError))
+                        postViewState(ViewState.GeneralError(ErrorType.NetworkError))
                     }
                 }
             }
@@ -85,16 +85,9 @@ class MainViewModel(
 
     fun onSendAction(firstName: String, lastName: String, phoneNumber: String, amount: String) {
         val country = selectedCountry ?: return
-        val valuesToValidate = handleValidation(firstName, lastName, phoneNumber)
-        val hasInvalidValue = valuesToValidate.any { !it }
-        if (hasInvalidValue) {
-            _viewState.postValue(
-                ViewState.InputFieldError(
-                    !valuesToValidate[0],
-                    !valuesToValidate[1],
-                    !valuesToValidate[2]
-                )
-            )
+        val fieldsStatus = handleValidation(firstName, lastName, phoneNumber)
+        if (fieldsStatus.isAnyFieldInvalid) {
+            _viewState.postValue(ViewState.InputFieldError(fieldsStatus))
         } else {
             transaction =
                 Transaction(
@@ -118,11 +111,11 @@ class MainViewModel(
         firstName: String,
         lastName: String,
         phoneNumber: String
-    ): List<Boolean> {
+    ): InputFieldsStatus {
         val hasExpectedNumberOfDigits = phoneNumber.length == selectedCountry?.phoneNumberDigits
         val isValidPhoneNumber =
             PhoneNumberUtils.isGlobalPhoneNumber("${selectedCountry?.phonePrefix}$phoneNumber")
-        return listOf(
+        return InputFieldsStatus(
             firstName.isNotBlank(),
             lastName.isNotBlank(),
             hasExpectedNumberOfDigits && isValidPhoneNumber

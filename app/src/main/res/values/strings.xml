@@ -1,15 +1,17 @@
 <resources>
     <string name="app_name">Penguin</string>
 
+    <string name="text_description">Fill all the necessary fields and press Send to complete the transaction.</string>
+
     <string name="input_text_first_name_hint">Recipient First Name</string>
     <string name="input_text_last_name_hint">Recipient Last Name</string>
     <string name="input_text_country_hint">Recipient Country</string>
     <string name="input_text_phone_number_hint">Recipient Phone number</string>
-    <string name="input_text_amount_hint">Amount</string>
+    <string name="input_text_amount_hint">Amount in Binary</string>
 
     <string name="input_text_required_error">Required field</string>
     <string name="input_text_invalid_error">Invalid field</string>
-    <string name="input_text_amount_helper">%1$s: %2$s</string>
+    <string name="input_text_amount_helper"><b>%1$s:</b> %2$s</string>
 
     <string name="button_send">Send</string>
 

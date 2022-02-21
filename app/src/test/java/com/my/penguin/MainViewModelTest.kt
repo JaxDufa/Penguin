@@ -6,6 +6,7 @@ import com.my.penguin.data.ExchangeRateRepository
 import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRates
 import com.my.penguin.presentation.fragment.ErrorType
+import com.my.penguin.presentation.fragment.InputFieldsStatus
 import com.my.penguin.presentation.fragment.MainViewModel
 import com.my.penguin.presentation.fragment.ViewState
 import com.my.penguin.presentation.models.Country
@@ -89,7 +90,7 @@ class MainViewModelTest {
 
         initViewModel()
         runTest {
-            assertEquals(ViewState.Error(ErrorType.UnknownError), viewModel.viewState.value)
+            assertEquals(ViewState.GeneralError(ErrorType.UnknownError), viewModel.viewState.value)
         }
     }
 
@@ -102,7 +103,7 @@ class MainViewModelTest {
 
         initViewModel()
         runTest {
-            assertEquals(ViewState.Error(ErrorType.NetworkError), viewModel.viewState.value)
+            assertEquals(ViewState.GeneralError(ErrorType.NetworkError), viewModel.viewState.value)
         }
     }
 
@@ -217,9 +218,11 @@ class MainViewModelTest {
 
             assertEquals(
                 ViewState.InputFieldError(
-                    firstNameInvalid = true,
-                    lastNameInvalid = true,
-                    phoneNumberInvalid = true
+                    InputFieldsStatus(
+                        isValidFirstName = false,
+                        isValidLastName = false,
+                        isValidPhoneNumber = false
+                    )
                 ),
                 viewModel.viewState.value
             )
@@ -235,9 +238,11 @@ class MainViewModelTest {
 
             assertEquals(
                 ViewState.InputFieldError(
-                    firstNameInvalid = false,
-                    lastNameInvalid = false,
-                    phoneNumberInvalid = true
+                    InputFieldsStatus(
+                        isValidFirstName = true,
+                        isValidLastName = true,
+                        isValidPhoneNumber = false
+                    )
                 ),
                 viewModel.viewState.value
             )

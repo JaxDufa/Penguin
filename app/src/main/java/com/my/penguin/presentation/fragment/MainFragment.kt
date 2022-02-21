@@ -22,15 +22,14 @@ import com.my.penguin.presentation.models.RecipientCurrencyBinaryValue
 import com.my.penguin.presentation.models.Transaction
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-
 class MainFragment : Fragment() {
-
-    private val viewModel: MainViewModel by viewModel()
 
     private var _binding: FragmentMainBinding? = null
 
     // Valid between onCreateView and onDestroyView
     private val binding get() = _binding!!
+
+    private val viewModel: MainViewModel by viewModel()
 
     private val TextInputLayout.text: String
         get() = editText?.text.toString()
@@ -62,7 +61,6 @@ class MainFragment : Fragment() {
         with(binding) {
             buttonSend.setOnClickListener {
                 it.hideKeyboard()
-                it.requestFocus()
                 viewModel.onSendAction(
                     textFirstName.text,
                     textLastName.text,
@@ -76,13 +74,13 @@ class MainFragment : Fragment() {
 
     private fun setupInputLayouts() {
         with(binding) {
+            updateFieldRequirementFeedback(textFirstName, textLastName, textPhoneNumber, textAmount)
             textCountry.editText?.setOnFocusChangeListener { view, focus ->
                 if (focus) {
                     view.hideKeyboard()
                 }
             }
 
-            listenFieldChanges(textFirstName, textLastName, textPhoneNumber, textAmount)
             textAmount.editText?.run {
                 addTextChangedListener(
                     afterTextChanged = {
@@ -100,27 +98,14 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun listenFieldChanges(vararg inputLayouts: TextInputLayout) {
+    private fun updateFieldRequirementFeedback(vararg inputLayouts: TextInputLayout) {
         inputLayouts.forEach { input ->
             input.editText?.addTextChangedListener {
-                if (input.text.isNotBlank()) {
-                    input.isErrorEnabled = false
-                }
+                input.hideErrorIfNotEmpty()
             }
             input.editText?.setOnFocusChangeListener { _, focus ->
-                if (!focus) {
-                    input.listenFieldChanges()
-                }
+                if (!focus) input.showErrorIfEmpty()
             }
-        }
-    }
-
-    private fun TextInputLayout.listenFieldChanges() {
-        if (editText?.text.isNullOrBlank()) {
-            isErrorEnabled = true
-            error = getString(R.string.input_text_required_error)
-        } else {
-            isErrorEnabled = false
         }
     }
 
@@ -130,30 +115,29 @@ class MainFragment : Fragment() {
                 when (it) {
                     is ViewState.Initial -> showInitialState(it.countriesName)
                     is ViewState.Default -> showDefaultState(it.country)
-                    is ViewState.Error -> showErrorState(it.type)
-                    is ViewState.InputFieldError -> showInputErrorState(
-                        it.firstNameInvalid,
-                        it.lastNameInvalid,
-                        it.phoneNumberInvalid
-                    )
+                    is ViewState.GeneralError -> showErrorState(it.type)
+                    is ViewState.InputFieldError -> showInputErrorState(it.inputFieldStatus)
                     is ViewState.Confirm -> showConfirmState(it.transaction)
                     is ViewState.Complete -> showCompleteState(it.transaction)
                     else -> Unit
                 }
                 showLoadingState(it.loading)
             }
-            recipientCurrencyBinaryValue.observe(viewLifecycleOwner, ::updateWithCurrency)
+            recipientCurrencyBinaryValue.observe(
+                viewLifecycleOwner,
+                ::updateRecipientBinaryCurrency
+            )
         }
     }
 
-    private fun updateWithCurrency(recipientCurrency: RecipientCurrencyBinaryValue) {
+    private fun updateRecipientBinaryCurrency(recipientCurrency: RecipientCurrencyBinaryValue) {
         binding.textAmount.helperText =
             getString(
                 R.string.input_text_amount_helper,
                 recipientCurrency.prefix,
                 recipientCurrency.value
             )
-        binding.buttonSend.isEnabled = recipientCurrency.value.isNotBlank()
+        binding.buttonSend.isEnabled = recipientCurrency.isValidAmount
     }
     // endregion
 
@@ -189,50 +173,53 @@ class MainFragment : Fragment() {
     }
 
     private fun showLoadingState(shouldShow: Boolean) {
-        binding.progressIndicatorContainer.isVisible = shouldShow
+        with(binding) {
+            progressIndicatorContainer.isVisible = shouldShow
+            if (shouldShow) buttonSend.isEnabled = false
+        }
     }
 
-    private fun showInputErrorState(
-        showFirstNameError: Boolean,
-        showLastNameError: Boolean,
-        showPhoneError: Boolean
-    ) {
+    private fun showInputErrorState(inputFieldsStatus: InputFieldsStatus) {
         with(binding) {
-            if (showFirstNameError) textFirstName.error =
-                getString(R.string.input_text_invalid_error)
-            if (showLastNameError) textLastName.error = getString(R.string.input_text_invalid_error)
-            if (showPhoneError) textPhoneNumber.error = getString(R.string.input_text_invalid_error)
+            val invalidErrorMessage = getString(R.string.input_text_invalid_error)
+            if (!inputFieldsStatus.isValidFirstName) textFirstName.error = invalidErrorMessage
+            if (!inputFieldsStatus.isValidLastName) textLastName.error = invalidErrorMessage
+            if (!inputFieldsStatus.isValidPhoneNumber) textPhoneNumber.error = invalidErrorMessage
         }
     }
 
     private fun showConfirmState(transaction: Transaction) {
-        buildSimpleDialog(
-            resources.getString(R.string.confirm_title),
-            resources.getString(
-                R.string.confirm_message,
-                transaction.amount,
-                transaction.phone
-            )
-        ).setPositiveButton(resources.getString(R.string.confirm_positive_action)) { _, _ ->
-            viewModel.onConfirmAction()
-        }.setNegativeButton(resources.getString(R.string.confirm_negative_action)) { dialog, _ ->
-            dialog.dismiss()
-        }.show()
+        MaterialAlertDialogBuilder(requireContext())
+            .buildSimpleDialog(
+                getString(R.string.confirm_title),
+                getString(
+                    R.string.confirm_message,
+                    transaction.amount,
+                    transaction.phone
+                )
+            ).setPositiveButton(getString(R.string.confirm_positive_action)) { _, _ ->
+                viewModel.onConfirmAction()
+            }
+            .setNegativeButton(getString(R.string.confirm_negative_action)) { dialog, _ ->
+                dialog.dismiss()
+            }.show()
     }
 
     private fun showCompleteState(transaction: Transaction) {
         resetState()
 
-        buildSimpleDialog(
-            resources.getString(R.string.transaction_complete_title),
-            resources.getString(
-                R.string.transaction_complete_message,
-                transaction.amount,
-                transaction.phone
+        MaterialAlertDialogBuilder(requireContext())
+            .buildSimpleDialog(
+                getString(R.string.transaction_complete_title),
+                getString(
+                    R.string.transaction_complete_message,
+                    transaction.amount,
+                    transaction.phone
+                )
             )
-        ).setPositiveButton(resources.getString(R.string.transaction_positive_action)) { dialog, _ ->
-            dialog.dismiss()
-        }.show()
+            .setPositiveButton(getString(R.string.transaction_positive_action)) { dialog, _ ->
+                dialog.dismiss()
+            }.show()
     }
 
     private fun resetState() {
@@ -255,20 +242,39 @@ class MainFragment : Fragment() {
     }
 
     private fun showErrorState(errorType: ErrorType) {
-        buildSimpleDialog(
-            resources.getString(errorType.title),
-            resources.getString(errorType.message)
-        ).setPositiveButton(resources.getString(R.string.error_positive_button)) { _, _ ->
-            viewModel.onTryAgain()
-        }.show()
+        MaterialAlertDialogBuilder(requireContext())
+            .buildSimpleDialog(
+                getString(errorType.title),
+                getString(errorType.message)
+            ).setPositiveButton(getString(R.string.error_positive_button)) { _, _ ->
+                viewModel.onTryAgain()
+            }.show()
     }
     // endregion
 
-    private fun buildSimpleDialog(title: String, message: String): MaterialAlertDialogBuilder {
-        return MaterialAlertDialogBuilder(requireContext())
-            .setCancelable(false)
+    // region - Helpers
+    private fun MaterialAlertDialogBuilder.buildSimpleDialog(
+        title: String,
+        message: String
+    ): MaterialAlertDialogBuilder {
+        return setCancelable(false)
             .setTitle(title)
             .setMessage(message)
+    }
+
+    private fun TextInputLayout.hideErrorIfNotEmpty() {
+        if (text.isNotBlank()) {
+            isErrorEnabled = false
+        }
+    }
+
+    private fun TextInputLayout.showErrorIfEmpty() {
+        if (text.isBlank()) {
+            isErrorEnabled = true
+            error = getString(R.string.input_text_required_error)
+        } else {
+            isErrorEnabled = false
+        }
     }
 
     private fun View.hideKeyboard() {
@@ -276,4 +282,5 @@ class MainFragment : Fragment() {
             requireActivity().getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(windowToken, 0)
     }
+    // endregion
 }
