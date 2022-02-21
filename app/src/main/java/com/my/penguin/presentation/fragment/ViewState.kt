@@ -9,9 +9,9 @@ sealed class ViewState(val loading: Boolean = false) {
     object Loading : ViewState(true)
     data class Error(val type: ErrorType) : ViewState()
     data class InputFieldError(
-        val firstName: Boolean,
-        val lastName: Boolean,
-        val phoneNumber: Boolean
+        val firstNameInvalid: Boolean,
+        val lastNameInvalid: Boolean,
+        val phoneNumberInvalid: Boolean
     ) : ViewState()
 
     data class Initial(val countriesName: List<String>) : ViewState()

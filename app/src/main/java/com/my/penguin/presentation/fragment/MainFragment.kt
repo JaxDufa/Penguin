@@ -18,7 +18,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.my.penguin.R
 import com.my.penguin.databinding.FragmentMainBinding
 import com.my.penguin.presentation.models.Country
-import com.my.penguin.presentation.models.CurrencyBinaryValue
+import com.my.penguin.presentation.models.RecipientCurrencyBinaryValue
 import com.my.penguin.presentation.models.Transaction
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
@@ -126,15 +126,15 @@ class MainFragment : Fragment() {
 
     private fun setupObservers() {
         with(viewModel) {
-            stateViewState.observe(viewLifecycleOwner) {
+            viewState.observe(viewLifecycleOwner) {
                 when (it) {
                     is ViewState.Initial -> showInitialState(it.countriesName)
                     is ViewState.Default -> showDefaultState(it.country)
                     is ViewState.Error -> showErrorState(it.type)
                     is ViewState.InputFieldError -> showInputErrorState(
-                        it.firstName,
-                        it.lastName,
-                        it.phoneNumber
+                        it.firstNameInvalid,
+                        it.lastNameInvalid,
+                        it.phoneNumberInvalid
                     )
                     is ViewState.Confirm -> showConfirmState(it.transaction)
                     is ViewState.Complete -> showCompleteState(it.transaction)
@@ -142,14 +142,18 @@ class MainFragment : Fragment() {
                 }
                 showLoadingState(it.loading)
             }
-            currencyBinaryFinalValue.observe(viewLifecycleOwner, ::updateWithCurrency)
+            recipientCurrencyBinaryValue.observe(viewLifecycleOwner, ::updateWithCurrency)
         }
     }
 
-    private fun updateWithCurrency(currency: CurrencyBinaryValue) {
+    private fun updateWithCurrency(recipientCurrency: RecipientCurrencyBinaryValue) {
         binding.textAmount.helperText =
-            getString(R.string.input_text_amount_helper, currency.prefix, currency.value)
-        binding.buttonSend.isEnabled = currency.value.isNotBlank()
+            getString(
+                R.string.input_text_amount_helper,
+                recipientCurrency.prefix,
+                recipientCurrency.value
+            )
+        binding.buttonSend.isEnabled = recipientCurrency.value.isNotBlank()
     }
     // endregion
 

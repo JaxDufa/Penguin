@@ -1,6 +1,7 @@
 package com.my.penguin.presentation.fragment
 
 import android.telephony.PhoneNumberUtils
+import androidx.annotation.IntRange
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,7 +11,7 @@ import com.my.penguin.data.ExchangeRateRepository
 import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRates
 import com.my.penguin.presentation.models.Country
-import com.my.penguin.presentation.models.CurrencyBinaryValue
+import com.my.penguin.presentation.models.RecipientCurrencyBinaryValue
 import com.my.penguin.presentation.models.Transaction
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -21,10 +22,10 @@ class MainViewModel(
 ) : ViewModel() {
 
     private val _viewState = MutableLiveData<ViewState>()
-    val stateViewState: LiveData<ViewState> by ::_viewState
+    val viewState: LiveData<ViewState> by ::_viewState
 
-    private val _currencyBinaryFinalValue = MutableLiveData<CurrencyBinaryValue>()
-    val currencyBinaryFinalValue: LiveData<CurrencyBinaryValue> by ::_currencyBinaryFinalValue
+    private val _currencyBinaryFinalValue = MutableLiveData<RecipientCurrencyBinaryValue>()
+    val recipientCurrencyBinaryValue: LiveData<RecipientCurrencyBinaryValue> by ::_currencyBinaryFinalValue
 
     var selectedCountry: Country? = null
     private val countries: List<Country> = listOf(
@@ -64,7 +65,7 @@ class MainViewModel(
         }
     }
 
-    fun onCountrySelected(position: Int) {
+    fun onCountrySelected(@IntRange(from = 0, to = 3) position: Int) {
         selectedCountry = countries.getOrNull(position)
         selectedCountry?.let {
             _viewState.postValue(ViewState.Default(it))
@@ -130,7 +131,7 @@ class MainViewModel(
 
     private fun updateCurrentBinary(prefix: String, value: String) {
         _currencyBinaryFinalValue.postValue(
-            CurrencyBinaryValue(
+            RecipientCurrencyBinaryValue(
                 prefix,
                 value
             )
