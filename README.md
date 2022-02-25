@@ -1,7 +1,7 @@
 # Penguin
 
 This is a simple study app that simulates money transactions between different countries checking
-their local exchange rates with the Open Exchange Rate API and converting valus to Binary.
+their local exchange rates with the Open Exchange Rate API and converting values to Binary.
 
 ### API
 
@@ -14,7 +14,7 @@ build.gradle file, to include your ID/KEY add it in the following format:
 api.id="YOUR_ID"
 ```
 
-or
+or just update the buildConfigField to directly use your id
 
 ```
 // build.gradle
