@@ -17,9 +17,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.my.penguin.R
 import com.my.penguin.databinding.FragmentMainBinding
-import com.my.penguin.presentation.models.Country
-import com.my.penguin.presentation.models.RecipientCurrencyBinaryValue
-import com.my.penguin.presentation.models.Transaction
+import com.my.penguin.presentation.model.Country
+import com.my.penguin.presentation.model.RecipientCurrencyBinaryValue
+import com.my.penguin.presentation.model.Transaction
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainFragment : Fragment() {

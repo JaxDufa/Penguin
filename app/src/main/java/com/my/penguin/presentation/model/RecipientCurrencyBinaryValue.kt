@@ -1,4 +1,4 @@
-package com.my.penguin.presentation.models
+package com.my.penguin.presentation.model
 
 data class RecipientCurrencyBinaryValue(
     val prefix: String,

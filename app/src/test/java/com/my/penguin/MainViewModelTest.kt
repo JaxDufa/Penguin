@@ -9,9 +9,9 @@ import com.my.penguin.presentation.fragment.ErrorType
 import com.my.penguin.presentation.fragment.InputFieldsStatus
 import com.my.penguin.presentation.fragment.MainViewModel
 import com.my.penguin.presentation.fragment.ViewState
-import com.my.penguin.presentation.models.Country
-import com.my.penguin.presentation.models.RecipientCurrencyBinaryValue
-import com.my.penguin.presentation.models.Transaction
+import com.my.penguin.presentation.model.Country
+import com.my.penguin.presentation.model.RecipientCurrencyBinaryValue
+import com.my.penguin.presentation.model.Transaction
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

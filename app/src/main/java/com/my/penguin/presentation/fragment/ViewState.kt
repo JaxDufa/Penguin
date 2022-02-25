@@ -2,8 +2,8 @@ package com.my.penguin.presentation.fragment
 
 import androidx.annotation.StringRes
 import com.my.penguin.R
-import com.my.penguin.presentation.models.Country
-import com.my.penguin.presentation.models.Transaction
+import com.my.penguin.presentation.model.Country
+import com.my.penguin.presentation.model.Transaction
 
 sealed class ViewState(val loading: Boolean = false) {
     object Loading : ViewState(true)

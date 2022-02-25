@@ -10,15 +10,15 @@ import com.my.penguin.NetworkProvider
 import com.my.penguin.data.ExchangeRateRepository
 import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRates
-import com.my.penguin.presentation.models.Country
-import com.my.penguin.presentation.models.RecipientCurrencyBinaryValue
-import com.my.penguin.presentation.models.Transaction
+import com.my.penguin.presentation.model.Country
+import com.my.penguin.presentation.model.RecipientCurrencyBinaryValue
+import com.my.penguin.presentation.model.Transaction
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainViewModel(
     private val repository: ExchangeRateRepository,
-    private val networkProvide: NetworkProvider
+    private val networkProvider: NetworkProvider
 ) : ViewModel() {
 
     private val _viewState = MutableLiveData<ViewState>()
@@ -62,7 +62,7 @@ class MainViewModel(
     }
 
     private fun onErrorResponse() {
-        val viewState = if (networkProvide.isConnected) {
+        val viewState = if (networkProvider.isConnected) {
             ViewState.GeneralError(ErrorType.UnknownError)
         } else {
             ViewState.GeneralError(ErrorType.NetworkError)
