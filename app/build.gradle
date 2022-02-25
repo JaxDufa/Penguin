@@ -2,10 +2,14 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-parcelize'
+    id 'kotlin-kapt'
 }
 
 android {
     compileSdk 32
+
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file("local.properties").newDataInputStream())
 
     defaultConfig {
         applicationId "com.my.penguin"
@@ -13,6 +17,9 @@ android {
         targetSdk 32
         versionCode 1
         versionName "1.0"
+
+        buildConfigField "String", "API_URL", "\"https://openexchangerates.org/api/\""
+        buildConfigField "String", "API_KEY", properties.getProperty("api.id", "")
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,6 +40,11 @@ android {
     buildFeatures {
         viewBinding true
     }
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -42,13 +54,16 @@ dependencies {
     implementation 'com.google.android.material:material:1.5.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
     implementation 'androidx.core:core-splashscreen:1.0.0-beta01'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
 
     // https://github.com/square/moshi/blob/master/CHANGELOG.md
     implementation 'com.squareup.moshi:moshi:1.13.0'
+    kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.13.0'
 
     // https://github.com/square/retrofit/blob/master/CHANGELOG.md
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.3'
 
     // https://github.com/InsertKoinIO/koin/blob/main/CHANGELOG.md
     implementation 'io.insert-koin:koin-core:3.1.5'
@@ -61,10 +76,15 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
 
     // https://github.com/mockk/mockk/releases
-    testImplementation 'io.mockk:mockk:1.12.2'
+    testImplementation 'io.mockk:mockk:1.12.0'
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     testImplementation 'io.insert-koin:koin-test:3.1.5'
+    testImplementation 'androidx.arch.core:core-testing:2.1.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0'
+    testImplementation 'org.robolectric:robolectric:4.7.3'
+
+    debugImplementation 'androidx.fragment:fragment-testing:1.4.1'
 }
