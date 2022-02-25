@@ -28,14 +28,14 @@ class MainViewModel(
     val recipientCurrencyBinaryValue: LiveData<RecipientCurrencyBinaryValue> by ::_currencyBinaryFinalValue
 
     var selectedCountry: Country? = null
+    private var transaction: Transaction? = null
+
     private val countries: List<Country> = listOf(
         Country.Kenya,
         Country.Nigeria,
         Country.Tanzania,
         Country.Uganda
     )
-
-    private var transaction: Transaction? = null
 
     init {
         onTryAgain()
@@ -44,65 +44,72 @@ class MainViewModel(
     // region - Public
     fun onTryAgain() {
         viewModelScope.launch {
-            _viewState.postValue(ViewState.Loading)
+            postViewState(ViewState.Loading)
             when (val result = repository.loadExchangeRates()) {
-                is Result.Success -> {
-                    loadExchangeRates(result.data)
-                    postViewState(
-                        ViewState.Initial(
-                            countries.map { it.name }
-                        )
-                    )
-                }
-                is Result.Error -> {
-                    if (networkProvide.isConnected) {
-                        postViewState(ViewState.GeneralError(ErrorType.UnknownError))
-                    } else {
-                        postViewState(ViewState.GeneralError(ErrorType.NetworkError))
-                    }
-                }
+                is Result.Success -> onSuccessResponse(result.data)
+                is Result.Error -> onErrorResponse()
             }
         }
     }
 
+    private fun onSuccessResponse(exchangeRates: ExchangeRates) {
+        loadExchangeRates(exchangeRates)
+        postViewState(
+            ViewState.Initial(
+                countries.map { it.name }
+            )
+        )
+    }
+
+    private fun onErrorResponse() {
+        val viewState = if (networkProvide.isConnected) {
+            ViewState.GeneralError(ErrorType.UnknownError)
+        } else {
+            ViewState.GeneralError(ErrorType.NetworkError)
+        }
+        postViewState(viewState)
+    }
+
     fun onCountrySelected(@IntRange(from = 0, to = 3) position: Int) {
         selectedCountry = countries.getOrNull(position)
-        selectedCountry?.let {
-            _viewState.postValue(ViewState.Default(it))
+        runSafeCountryBlock {
+            postViewState(ViewState.Default(it))
         }
     }
 
     fun onAmountChanged(amount: String) {
-        val country = selectedCountry ?: return
-        if (amount.isBlank()) {
-            updateCurrentBinary(country.currencyPrefix, "")
-            return
+        runSafeCountryBlock {
+            if (amount.isBlank()) {
+                updateCurrentBinary(it.currencyPrefix, "")
+                return@runSafeCountryBlock
+            }
+            val valueInRecipientExchange = amount.toDecimal() * it.exchangeRate
+            val binaryInRecipientExchange = valueInRecipientExchange.toBinaryString()
+            updateCurrentBinary(it.currencyPrefix, binaryInRecipientExchange)
         }
-        val valueInCurrentExchange = amount.toDecimal() * country.exchangeRate
-        val binaryCurrentExchange = Integer.toBinaryString(valueInCurrentExchange.toInt())
-        updateCurrentBinary(country.currencyPrefix, binaryCurrentExchange)
     }
 
     fun onSendAction(firstName: String, lastName: String, phoneNumber: String, amount: String) {
-        val country = selectedCountry ?: return
-        val fieldsStatus = handleValidation(firstName, lastName, phoneNumber)
-        if (fieldsStatus.isAnyFieldInvalid) {
-            _viewState.postValue(ViewState.InputFieldError(fieldsStatus))
-        } else {
-            transaction =
-                Transaction(
-                    firstName,
-                    lastName,
-                    amount,
-                    "${country.phonePrefix} $phoneNumber"
-                ).also {
-                    _viewState.postValue(ViewState.Confirm(it))
-                }
+        runSafeCountryBlock {
+            val fieldsStatus = handleValidation(firstName, lastName, phoneNumber)
+            if (fieldsStatus.isAnyFieldInvalid) {
+                postViewState(ViewState.InputFieldError(fieldsStatus))
+            } else {
+                transaction =
+                    Transaction(
+                        firstName,
+                        lastName,
+                        amount,
+                        phoneNumber.addCountryPrefix()
+                    ).also {
+                        postViewState(ViewState.Confirm(it))
+                    }
+            }
         }
     }
 
     fun onConfirmAction() {
-        fakeSend()
+        fakeSendRequest()
     }
     // endregion
 
@@ -114,20 +121,11 @@ class MainViewModel(
     ): InputFieldsStatus {
         val hasExpectedNumberOfDigits = phoneNumber.length == selectedCountry?.phoneNumberDigits
         val isValidPhoneNumber =
-            PhoneNumberUtils.isGlobalPhoneNumber("${selectedCountry?.phonePrefix}$phoneNumber")
+            PhoneNumberUtils.isGlobalPhoneNumber(phoneNumber.addCountryPrefix(false))
         return InputFieldsStatus(
             firstName.isNotBlank(),
             lastName.isNotBlank(),
             hasExpectedNumberOfDigits && isValidPhoneNumber
-        )
-    }
-
-    private fun updateCurrentBinary(prefix: String, value: String) {
-        _currencyBinaryFinalValue.postValue(
-            RecipientCurrencyBinaryValue(
-                prefix,
-                value
-            )
         )
     }
 
@@ -142,24 +140,48 @@ class MainViewModel(
         }
     }
 
-    private fun postViewState(state: ViewState) {
-        _viewState.postValue(state)
-    }
-
-    private fun fakeSend() {
+    private fun fakeSendRequest() {
         viewModelScope.launch {
-            _viewState.postValue(ViewState.Loading)
+            postViewState(ViewState.Loading)
+
+            // Delay to simulate a network request
             delay(5000)
 
             transaction?.let {
-                _viewState.postValue(
-                    ViewState.Complete(it)
-                )
+                postViewState(ViewState.Complete(it))
             }
             transaction = null
         }
     }
+
+    private fun runSafeCountryBlock(block: (country: Country) -> Unit) {
+        selectedCountry?.let {
+            block(it)
+        }
+    }
+
+    private fun updateCurrentBinary(prefix: String, value: String) {
+        _currencyBinaryFinalValue.postValue(
+            RecipientCurrencyBinaryValue(
+                prefix,
+                value
+            )
+        )
+    }
+
+    private fun postViewState(state: ViewState) {
+        _viewState.postValue(state)
+    }
     // endregion
 
+    // region - Extensions
+    private fun String.addCountryPrefix(withEmptySpace: Boolean = true): String {
+        val separator = if (withEmptySpace) " " else ""
+        return "${selectedCountry?.phonePrefix}$separator$this"
+    }
+
     private fun String.toDecimal(): Long = toLong(2)
+
+    private fun Float.toBinaryString(): String = Integer.toBinaryString(this.toInt())
+    // endregion
 }
