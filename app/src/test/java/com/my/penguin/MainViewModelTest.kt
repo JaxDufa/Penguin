@@ -4,6 +4,7 @@ import android.telephony.PhoneNumberUtils
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.my.penguin.data.ExchangeRateRepository
 import com.my.penguin.data.Result
+import com.my.penguin.data.model.ExchangeRate
 import com.my.penguin.data.model.ExchangeRates
 import com.my.penguin.presentation.fragment.ErrorType
 import com.my.penguin.presentation.fragment.InputFieldsStatus
@@ -65,7 +66,14 @@ class MainViewModelTest {
     @Test
     fun `when view model is initialized and repository returns success, then request exchange rates and post Initial state`() {
         coEvery { mockRepository.loadExchangeRates() } coAnswers {
-            Result.Success(ExchangeRates(1f, 1f, 1f, 1f))
+            Result.Success(
+                ExchangeRates(
+                    ExchangeRate(1f),
+                    ExchangeRate(1f),
+                    ExchangeRate(1f),
+                    ExchangeRate(1f)
+                )
+            )
         }
 
         initViewModel()
@@ -184,7 +192,14 @@ class MainViewModelTest {
     @Test
     fun `when amount is submitted for Nigeria, then post expected recipient currency value`() {
         coEvery { mockRepository.loadExchangeRates() } coAnswers {
-            Result.Success(ExchangeRates(1f, 361.50f, 1f, 1f))
+            Result.Success(
+                ExchangeRates(
+                    ExchangeRate(1f),
+                    ExchangeRate(361.50f),
+                    ExchangeRate(1f),
+                    ExchangeRate(1f)
+                )
+            )
         }
 
         initViewModel()
@@ -259,8 +274,7 @@ class MainViewModelTest {
             assertEquals(
                 ViewState.Confirm(
                     Transaction(
-                        "Dr",
-                        "Penguin",
+                        "Dr Penguin",
                         "1",
                         "+254 123456789"
                     )
@@ -280,8 +294,7 @@ class MainViewModelTest {
             assertEquals(
                 ViewState.Confirm(
                     Transaction(
-                        "Dr",
-                        "Penguin",
+                        "Dr Penguin",
                         "1",
                         "+234 1234567"
                     )
@@ -334,8 +347,7 @@ class MainViewModelTest {
             assertEquals(
                 ViewState.Complete(
                     Transaction(
-                        "Dr",
-                        "Penguin",
+                        "Dr Penguin",
                         "1",
                         "+234 1234567"
                     )

@@ -1,8 +1,7 @@
 package com.my.penguin.presentation.model
 
 data class Transaction(
-    val firstName: String,
-    val lastName: String,
-    val amount: String,
-    val phone: String
+    val recipientFullName: String,
+    val recipientPhone: String,
+    val amount: String
 )

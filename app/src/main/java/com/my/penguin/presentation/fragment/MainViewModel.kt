@@ -1,6 +1,5 @@
 package com.my.penguin.presentation.fragment
 
-import android.telephony.PhoneNumberUtils
 import androidx.annotation.IntRange
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,9 +9,7 @@ import com.my.penguin.NetworkProvider
 import com.my.penguin.data.ExchangeRateRepository
 import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRates
-import com.my.penguin.presentation.model.Country
-import com.my.penguin.presentation.model.RecipientCurrencyBinaryValue
-import com.my.penguin.presentation.model.Transaction
+import com.my.penguin.presentation.model.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -71,8 +68,7 @@ class MainViewModel(
     }
 
     fun onCountrySelected(@IntRange(from = 0, to = 3) position: Int) {
-        selectedCountry = countries.getOrNull(position)
-        runSafeCountryBlock {
+        selectedCountry = countries.getOrNull(position)?.also {
             postViewState(ViewState.Default(it))
         }
     }
@@ -80,30 +76,27 @@ class MainViewModel(
     fun onAmountChanged(amount: String) {
         runSafeCountryBlock {
             if (amount.isBlank()) {
-                updateCurrentBinary(it.currencyPrefix, "")
-                return@runSafeCountryBlock
+                updateCurrentBinary(it.currencyPrefix)
+            } else {
+                val valueInRecipientExchange = it.exchangeRate.apply(amount.toDecimal())
+                val binaryInRecipientExchange = valueInRecipientExchange.toBinaryString()
+                updateCurrentBinary(it.currencyPrefix, binaryInRecipientExchange)
             }
-            val valueInRecipientExchange = amount.toDecimal() * it.exchangeRate
-            val binaryInRecipientExchange = valueInRecipientExchange.toBinaryString()
-            updateCurrentBinary(it.currencyPrefix, binaryInRecipientExchange)
         }
     }
 
     fun onSendAction(firstName: String, lastName: String, phoneNumber: String, amount: String) {
         runSafeCountryBlock {
-            val fieldsStatus = handleValidation(firstName, lastName, phoneNumber)
+            val phoneAndPrefix = CountryPhone(it.phonePrefix, phoneNumber)
+            val fieldsStatus = InputFieldsStatus(
+                firstName.isNotBlank(),
+                lastName.isNotBlank(),
+                phoneAndPrefix.isValid(it.phoneNumberDigits)
+            )
             if (fieldsStatus.isAnyFieldInvalid) {
                 postViewState(ViewState.InputFieldError(fieldsStatus))
             } else {
-                transaction =
-                    Transaction(
-                        firstName,
-                        lastName,
-                        amount,
-                        phoneNumber.addCountryPrefix()
-                    ).also {
-                        postViewState(ViewState.Confirm(it))
-                    }
+                confirmTransaction(Name(firstName, lastName), phoneAndPrefix, amount)
             }
         }
     }
@@ -114,19 +107,19 @@ class MainViewModel(
     // endregion
 
     // region - Private
-    private fun handleValidation(
-        firstName: String,
-        lastName: String,
-        phoneNumber: String
-    ): InputFieldsStatus {
-        val hasExpectedNumberOfDigits = phoneNumber.length == selectedCountry?.phoneNumberDigits
-        val isValidPhoneNumber =
-            PhoneNumberUtils.isGlobalPhoneNumber(phoneNumber.addCountryPrefix(false))
-        return InputFieldsStatus(
-            firstName.isNotBlank(),
-            lastName.isNotBlank(),
-            hasExpectedNumberOfDigits && isValidPhoneNumber
-        )
+    private fun confirmTransaction(
+        name: Name,
+        countryPhone: CountryPhone,
+        amount: String
+    ) {
+        transaction =
+            Transaction(
+                name.fullName,
+                amount,
+                countryPhone.fullPhoneNumber
+            ).also {
+                postViewState(ViewState.Confirm(it))
+            }
     }
 
     private fun loadExchangeRates(exchangeRates: ExchangeRates) {
@@ -160,7 +153,7 @@ class MainViewModel(
         }
     }
 
-    private fun updateCurrentBinary(prefix: String, value: String) {
+    private fun updateCurrentBinary(prefix: String, value: String = "") {
         _currencyBinaryFinalValue.postValue(
             RecipientCurrencyBinaryValue(
                 prefix,
@@ -175,11 +168,6 @@ class MainViewModel(
     // endregion
 
     // region - Extensions
-    private fun String.addCountryPrefix(withEmptySpace: Boolean = true): String {
-        val separator = if (withEmptySpace) " " else ""
-        return "${selectedCountry?.phonePrefix}$separator$this"
-    }
-
     private fun String.toDecimal(): Long = toLong(2)
 
     private fun Float.toBinaryString(): String = Integer.toBinaryString(this.toInt())

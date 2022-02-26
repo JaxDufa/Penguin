@@ -180,7 +180,7 @@ class MainFragmentTest : KoinTest {
         launchFragment {
             assertNull(ShadowAlertDialog.getLatestDialog())
 
-            testViewState.value = ViewState.Confirm(Transaction("name", "", "11", "9999"))
+            testViewState.value = ViewState.Confirm(Transaction("name", "9999", "11"))
 
             assertNotNull(ShadowAlertDialog.getLatestDialog())
 
@@ -196,7 +196,7 @@ class MainFragmentTest : KoinTest {
         launchFragment {
             assertNull(ShadowAlertDialog.getLatestDialog())
 
-            testViewState.value = ViewState.Complete(Transaction("name", "", "11", "9999"))
+            testViewState.value = ViewState.Complete(Transaction("name", "9999", "11"))
 
             assertNotNull(ShadowAlertDialog.getLatestDialog())
         }
