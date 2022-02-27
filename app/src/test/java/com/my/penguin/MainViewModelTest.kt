@@ -2,10 +2,10 @@ package com.my.penguin
 
 import android.telephony.PhoneNumberUtils
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.my.penguin.data.ExchangeRateRepository
 import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRate
 import com.my.penguin.data.model.ExchangeRates
+import com.my.penguin.data.repository.ExchangeRateRepository
 import com.my.penguin.presentation.fragment.ErrorType
 import com.my.penguin.presentation.fragment.InputFieldsStatus
 import com.my.penguin.presentation.fragment.MainViewModel
@@ -275,8 +275,8 @@ class MainViewModelTest {
                 ViewState.Confirm(
                     Transaction(
                         "Dr Penguin",
-                        "1",
-                        "+254 123456789"
+                        "+254 123456789",
+                        "1"
                     )
                 ),
                 viewModel.viewState.value
@@ -295,8 +295,8 @@ class MainViewModelTest {
                 ViewState.Confirm(
                     Transaction(
                         "Dr Penguin",
-                        "1",
-                        "+234 1234567"
+                        "+234 1234567",
+                        "1"
                     )
                 ),
                 viewModel.viewState.value
@@ -348,8 +348,8 @@ class MainViewModelTest {
                 ViewState.Complete(
                     Transaction(
                         "Dr Penguin",
-                        "1",
-                        "+234 1234567"
+                        "+234 1234567",
+                        "1"
                     )
                 ),
                 viewModel.viewState.value

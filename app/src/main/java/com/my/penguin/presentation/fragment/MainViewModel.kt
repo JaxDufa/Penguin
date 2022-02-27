@@ -6,9 +6,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.my.penguin.NetworkProvider
-import com.my.penguin.data.ExchangeRateRepository
 import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRates
+import com.my.penguin.data.repository.ExchangeRateRepository
 import com.my.penguin.presentation.model.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -115,8 +115,8 @@ class MainViewModel(
         transaction =
             Transaction(
                 name.fullName,
-                amount,
-                countryPhone.fullPhoneNumber
+                countryPhone.fullPhoneNumber,
+                amount
             ).also {
                 postViewState(ViewState.Confirm(it))
             }

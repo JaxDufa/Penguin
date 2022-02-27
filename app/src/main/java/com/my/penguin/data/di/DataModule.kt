@@ -1,12 +1,17 @@
 package com.my.penguin.data.di
 
+import android.content.Context
 import com.my.penguin.BuildConfig
-import com.my.penguin.data.ExchangeRateRepository
-import com.my.penguin.data.ExchangeRateService
+import com.my.penguin.data.TimestampProvider
+import com.my.penguin.data.local.ExchangeRateStore
+import com.my.penguin.data.local.exchangeRateDataStore
+import com.my.penguin.data.remote.ExchangeRateService
+import com.my.penguin.data.repository.ExchangeRateRepository
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -19,8 +24,14 @@ val dataModule = module {
     single { provideRetrofit(get()) }
     single { provideApiService(get()) }
 
-    single { ExchangeRateRepository(get()) }
+    single { provideStore(androidContext()) }
+
+    single { TimestampProvider() }
+    single { ExchangeRateStore(get()) }
+    single { ExchangeRateRepository(get(), get(), get()) }
 }
+
+private fun provideStore(context: Context) = context.exchangeRateDataStore
 
 private fun provideOkHttpClient(): OkHttpClient {
     return OkHttpClient.Builder()

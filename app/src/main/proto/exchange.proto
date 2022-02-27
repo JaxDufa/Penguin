@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option java_package = "com.my.penguin";
+option java_multiple_files = true;
+
+message ExchangeRatesStored {
+  int64 timestamp = 1;
+  string base = 2;
+  float kenya = 3;
+  float nigeria = 4;
+  float tanzania = 5;
+  float uganda = 6;
+}
