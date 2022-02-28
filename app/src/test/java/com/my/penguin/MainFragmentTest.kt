@@ -115,11 +115,12 @@ class MainFragmentTest : KoinTest {
     }
 
     @Test
-    fun `when fragment received GeneralError state, then error state is shown`() {
+    fun `when fragment received UnknownError state, then error state is shown`() {
         launchFragment {
             assertNull(ShadowAlertDialog.getLatestDialog())
 
-            testViewState.value = ViewState.GeneralError(ErrorType.UnknownError)
+            val mockClick: OnClick = mockk(relaxed = true)
+            testViewState.value = ViewState.GeneralError(ErrorDialog.UnknownError(mockClick))
 
             assertTrue(binding.buttonSend.hasOnClickListeners())
             assertFalse(binding.textFirstName.isVisible)
@@ -135,7 +136,33 @@ class MainFragmentTest : KoinTest {
             (ShadowAlertDialog.getLatestDialog() as AlertDialog).getButton(BUTTON_POSITIVE)
                 .performClick()
             Shadows.shadowOf(Looper.getMainLooper()).idle()
-            verify { mockViewModel.onTryAgain() }
+            verify { mockClick() }
+        }
+    }
+
+    @Test
+    fun `when fragment received NetworkError state, then error state is shown`() {
+        launchFragment {
+            assertNull(ShadowAlertDialog.getLatestDialog())
+
+            val mockClick: OnClick = mockk(relaxed = true)
+            testViewState.value = ViewState.GeneralError(ErrorDialog.NetworkError(mockClick))
+
+            assertTrue(binding.buttonSend.hasOnClickListeners())
+            assertFalse(binding.textFirstName.isVisible)
+            assertFalse(binding.textLastName.isVisible)
+            assertFalse(binding.textCountry.isVisible)
+            assertFalse(binding.textPhoneNumber.isVisible)
+            assertFalse(binding.textAmount.isVisible)
+            assertFalse(binding.buttonSend.isEnabled)
+            assertFalse(binding.progressIndicatorContainer.isVisible)
+
+            assertNotNull(ShadowAlertDialog.getLatestDialog())
+
+            (ShadowAlertDialog.getLatestDialog() as AlertDialog).getButton(BUTTON_POSITIVE)
+                .performClick()
+            Shadows.shadowOf(Looper.getMainLooper()).idle()
+            verify { mockClick() }
         }
     }
 
@@ -180,14 +207,23 @@ class MainFragmentTest : KoinTest {
         launchFragment {
             assertNull(ShadowAlertDialog.getLatestDialog())
 
-            testViewState.value = ViewState.Confirm(Transaction("name", "9999", "11"))
+            val transaction = Transaction("name", "9999", "11")
+            val mockPositiveClick: OnClick = mockk(relaxed = true)
+            val mockNegativeClick: OnClick = mockk(relaxed = true)
+            testViewState.value = ViewState.Finish(
+                TransactionDialog.Confirm(
+                    transaction,
+                    mockPositiveClick,
+                    mockNegativeClick
+                )
+            )
 
             assertNotNull(ShadowAlertDialog.getLatestDialog())
 
             (ShadowAlertDialog.getLatestDialog() as AlertDialog).getButton(BUTTON_POSITIVE)
                 .performClick()
             Shadows.shadowOf(Looper.getMainLooper()).idle()
-            verify { mockViewModel.onConfirmAction() }
+            verify { mockPositiveClick() }
         }
     }
 
@@ -196,9 +232,21 @@ class MainFragmentTest : KoinTest {
         launchFragment {
             assertNull(ShadowAlertDialog.getLatestDialog())
 
-            testViewState.value = ViewState.Complete(Transaction("name", "9999", "11"))
+            val transaction = Transaction("name", "9999", "11")
+            val mockPositiveClick: OnClick = mockk(relaxed = true)
+            testViewState.value = ViewState.Finish(
+                TransactionDialog.Complete(
+                    transaction,
+                    mockPositiveClick
+                )
+            )
 
             assertNotNull(ShadowAlertDialog.getLatestDialog())
+
+            (ShadowAlertDialog.getLatestDialog() as AlertDialog).getButton(BUTTON_POSITIVE)
+                .performClick()
+            Shadows.shadowOf(Looper.getMainLooper()).idle()
+            verify { mockPositiveClick() }
         }
     }
 
@@ -219,6 +267,16 @@ class MainFragmentTest : KoinTest {
                 context.getString(R.string.input_text_amount_helper, prefix, amount),
                 binding.textAmount.helperText
             )
+        }
+    }
+
+    @Test
+    fun `when new amount value is typed, then send it to view model`() {
+        launchFragment {
+
+            binding.textAmount.editText?.setText("0110111")
+
+            verify { mockViewModel.onAmountChanged("0110111") }
         }
     }
 

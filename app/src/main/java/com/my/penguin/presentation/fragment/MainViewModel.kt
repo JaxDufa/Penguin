@@ -35,38 +35,10 @@ class MainViewModel(
     )
 
     init {
-        onTryAgain()
+        loadData()
     }
 
     // region - Public
-    fun onTryAgain() {
-        viewModelScope.launch {
-            postViewState(ViewState.Loading)
-            when (val result = repository.loadExchangeRates()) {
-                is Result.Success -> onSuccessResponse(result.data)
-                is Result.Error -> onErrorResponse()
-            }
-        }
-    }
-
-    private fun onSuccessResponse(exchangeRates: ExchangeRates) {
-        loadExchangeRates(exchangeRates)
-        postViewState(
-            ViewState.Initial(
-                countries.map { it.name }
-            )
-        )
-    }
-
-    private fun onErrorResponse() {
-        val viewState = if (networkProvider.isConnected) {
-            ViewState.GeneralError(ErrorType.UnknownError)
-        } else {
-            ViewState.GeneralError(ErrorType.NetworkError)
-        }
-        postViewState(viewState)
-    }
-
     fun onCountrySelected(@IntRange(from = 0, to = 3) position: Int) {
         selectedCountry = countries.getOrNull(position)?.also {
             postViewState(ViewState.Default(it))
@@ -100,13 +72,35 @@ class MainViewModel(
             }
         }
     }
-
-    fun onConfirmAction() {
-        fakeSendRequest()
-    }
     // endregion
 
     // region - Private
+    private fun loadData() {
+        viewModelScope.launch {
+            postViewState(ViewState.Loading)
+            when (val result = repository.loadExchangeRates()) {
+                is Result.Success -> onSuccessResponse(result.data)
+                is Result.Error -> onErrorResponse()
+            }
+        }
+    }
+
+    private fun onSuccessResponse(exchangeRates: ExchangeRates) {
+        loadExchangeRates(exchangeRates)
+        postViewState(
+            ViewState.Initial(countries.names())
+        )
+    }
+
+    private fun onErrorResponse() {
+        val error = if (networkProvider.isConnected) {
+            ErrorDialog.UnknownError { loadData() }
+        } else {
+            ErrorDialog.NetworkError { loadData() }
+        }
+        postViewState(ViewState.GeneralError(error))
+    }
+
     private fun confirmTransaction(
         name: Name,
         countryPhone: CountryPhone,
@@ -118,7 +112,15 @@ class MainViewModel(
                 countryPhone.fullPhoneNumber,
                 amount
             ).also {
-                postViewState(ViewState.Confirm(it))
+                postViewState(
+                    ViewState.Finish(
+                        TransactionDialog.Confirm(
+                            it,
+                            onClickPositive = { fakeSendRequest() },
+                            onClickNegative = {}
+                        )
+                    )
+                )
             }
     }
 
@@ -140,8 +142,14 @@ class MainViewModel(
             // Delay to simulate a network request
             delay(5000)
 
-            transaction?.let {
-                postViewState(ViewState.Complete(it))
+            transaction?.let { transaction ->
+                postViewState(
+                    ViewState.Finish(
+                        TransactionDialog.Complete(transaction) {
+                            postViewState(ViewState.Initial(countries.names()))
+                        }
+                    )
+                )
             }
             transaction = null
         }
@@ -168,6 +176,8 @@ class MainViewModel(
     // endregion
 
     // region - Extensions
+    private fun List<Country>.names(): List<String> = map { it.name }
+
     private fun String.toDecimal(): Long = toLong(2)
 
     private fun Float.toBinaryString(): String = Integer.toBinaryString(this.toInt())

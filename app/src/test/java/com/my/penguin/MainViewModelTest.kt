@@ -6,13 +6,9 @@ import com.my.penguin.data.Result
 import com.my.penguin.data.model.ExchangeRate
 import com.my.penguin.data.model.ExchangeRates
 import com.my.penguin.data.repository.ExchangeRateRepository
-import com.my.penguin.presentation.fragment.ErrorType
-import com.my.penguin.presentation.fragment.InputFieldsStatus
-import com.my.penguin.presentation.fragment.MainViewModel
-import com.my.penguin.presentation.fragment.ViewState
+import com.my.penguin.presentation.fragment.*
 import com.my.penguin.presentation.model.Country
 import com.my.penguin.presentation.model.RecipientCurrencyBinaryValue
-import com.my.penguin.presentation.model.Transaction
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import kotlin.test.assertIs
 
 @ExperimentalCoroutinesApi
 class MainViewModelTest {
@@ -98,7 +95,9 @@ class MainViewModelTest {
 
         initViewModel()
         runTest {
-            assertEquals(ViewState.GeneralError(ErrorType.UnknownError), viewModel.viewState.value)
+            assertIs<ViewState.GeneralError>(viewModel.viewState.value)
+            val errorState = viewModel.viewState.value as ViewState.GeneralError
+            assertIs<ErrorDialog.UnknownError>(errorState.dialog)
         }
     }
 
@@ -111,7 +110,9 @@ class MainViewModelTest {
 
         initViewModel()
         runTest {
-            assertEquals(ViewState.GeneralError(ErrorType.NetworkError), viewModel.viewState.value)
+            assertIs<ViewState.GeneralError>(viewModel.viewState.value)
+            val errorState = viewModel.viewState.value as ViewState.GeneralError
+            assertIs<ErrorDialog.NetworkError>(errorState.dialog)
         }
     }
 
@@ -271,16 +272,9 @@ class MainViewModelTest {
             viewModel.onCountrySelected(0)
             viewModel.onSendAction("Dr", "Penguin", "123456789", "1")
 
-            assertEquals(
-                ViewState.Confirm(
-                    Transaction(
-                        "Dr Penguin",
-                        "+254 123456789",
-                        "1"
-                    )
-                ),
-                viewModel.viewState.value
-            )
+            assertIs<ViewState.Finish>(viewModel.viewState.value)
+            val viewState = viewModel.viewState.value as ViewState.Finish
+            assertIs<TransactionDialog.Confirm>(viewState.dialog)
         }
     }
 
@@ -291,69 +285,45 @@ class MainViewModelTest {
             viewModel.onCountrySelected(1)
             viewModel.onSendAction("Dr", "Penguin", "1234567", "1")
 
-            assertEquals(
-                ViewState.Confirm(
-                    Transaction(
-                        "Dr Penguin",
-                        "+234 1234567",
-                        "1"
-                    )
-                ),
-                viewModel.viewState.value
-            )
+            assertIs<ViewState.Finish>(viewModel.viewState.value)
+            val viewState = viewModel.viewState.value as ViewState.Finish
+            assertIs<TransactionDialog.Confirm>(viewState.dialog)
         }
     }
 
     @Test
-    fun `when confirm without sending data before, then nothing new is posted`() {
-        initViewModel()
-        runTest {
-            viewModel.onCountrySelected(1)
-            viewModel.onConfirmAction()
-
-            assertEquals(
-                ViewState.Loading,
-                viewModel.viewState.value
-            )
-        }
-    }
-
-    @Test
-    fun `when confirm with sending data before, then Loading is posted`() {
+    fun `when confirm is posted and clicked, then Loading is posted`() {
         initViewModel()
         runTest {
             viewModel.onCountrySelected(1)
             viewModel.onSendAction("Dr", "Penguin", "1234567", "1")
 
+            assertIs<ViewState.Finish>(viewModel.viewState.value)
+            val viewState = viewModel.viewState.value as ViewState.Finish
 
-            viewModel.onConfirmAction()
-            assertEquals(
-                ViewState.Loading,
-                viewModel.viewState.value
-            )
+            viewState.dialog.data.positiveButton.onClick()
+
+            assertIs<ViewState.Loading>(viewModel.viewState.value)
         }
     }
 
     @Test
-    fun `when confirm with sending data before and waiting result, then Complete is posted`() {
+    fun `when confirm is posted and clicked, then Completed is posted after advanced time`() {
         initViewModel()
-
-        viewModel.onCountrySelected(1)
-        viewModel.onSendAction("Dr", "Penguin", "1234567", "1")
-
         runTest {
-            viewModel.onConfirmAction()
+            viewModel.onCountrySelected(1)
+            viewModel.onSendAction("Dr", "Penguin", "1234567", "1")
+
+            assertIs<ViewState.Finish>(viewModel.viewState.value)
+            val viewState = viewModel.viewState.value as ViewState.Finish
+
+            viewState.dialog.data.positiveButton.onClick()
+
             this.testScheduler.advanceUntilIdle()
-            assertEquals(
-                ViewState.Complete(
-                    Transaction(
-                        "Dr Penguin",
-                        "+234 1234567",
-                        "1"
-                    )
-                ),
-                viewModel.viewState.value
-            )
+
+            assertIs<ViewState.Finish>(viewModel.viewState.value)
+            val newViewState = viewModel.viewState.value as ViewState.Finish
+            assertIs<TransactionDialog.Complete>(newViewState.dialog)
         }
     }
 

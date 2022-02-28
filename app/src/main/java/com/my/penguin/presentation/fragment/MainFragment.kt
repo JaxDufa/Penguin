@@ -1,25 +1,23 @@
 package com.my.penguin.presentation.fragment
 
-import android.app.Activity
 import android.os.Bundle
 import android.text.InputFilter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.my.penguin.R
 import com.my.penguin.databinding.FragmentMainBinding
+import com.my.penguin.presentation.hideKeyboard
 import com.my.penguin.presentation.model.Country
 import com.my.penguin.presentation.model.RecipientCurrencyBinaryValue
-import com.my.penguin.presentation.model.Transaction
+import com.my.penguin.presentation.showDialog
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainFragment : Fragment() {
@@ -60,7 +58,7 @@ class MainFragment : Fragment() {
     private fun setupView() {
         with(binding) {
             buttonSend.setOnClickListener {
-                it.hideKeyboard()
+                requireActivity().hideKeyboard(it)
                 viewModel.onSendAction(
                     textFirstName.text,
                     textLastName.text,
@@ -77,7 +75,7 @@ class MainFragment : Fragment() {
             updateFieldRequirementFeedback(textFirstName, textLastName, textPhoneNumber, textAmount)
             textCountry.editText?.setOnFocusChangeListener { view, focus ->
                 if (focus) {
-                    view.hideKeyboard()
+                    requireActivity().hideKeyboard(view)
                 }
             }
 
@@ -115,10 +113,9 @@ class MainFragment : Fragment() {
                 when (it) {
                     is ViewState.Initial -> showInitialState(it.countriesName)
                     is ViewState.Default -> showDefaultState(it.country)
-                    is ViewState.GeneralError -> showErrorState(it.type)
+                    is ViewState.GeneralError -> showErrorState(it.dialog)
                     is ViewState.InputFieldError -> showInputErrorState(it.inputFieldStatus)
-                    is ViewState.Confirm -> showConfirmState(it.transaction)
-                    is ViewState.Complete -> showCompleteState(it.transaction)
+                    is ViewState.Finish -> showFinishState(it.dialog)
                     else -> Unit
                 }
                 showLoadingState(it.loading)
@@ -148,7 +145,7 @@ class MainFragment : Fragment() {
             R.layout.dropdown_menu_item,
             countriesName
         )
-        (binding.dropdownMenu as? AutoCompleteTextView)?.apply {
+        (binding.dropdownMenu as? AutoCompleteTextView)?.run {
             setAdapter(adapter)
             setOnItemClickListener { _, _, i, _ ->
                 viewModel.onCountrySelected(i)
@@ -188,38 +185,11 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun showConfirmState(transaction: Transaction) {
-        MaterialAlertDialogBuilder(requireContext())
-            .buildSimpleDialog(
-                getString(R.string.confirm_title),
-                getString(
-                    R.string.confirm_message,
-                    transaction.amount,
-                    transaction.recipientPhone
-                )
-            ).setPositiveButton(getString(R.string.confirm_positive_action)) { _, _ ->
-                viewModel.onConfirmAction()
-            }
-            .setNegativeButton(getString(R.string.confirm_negative_action)) { dialog, _ ->
-                dialog.dismiss()
-            }.show()
-    }
-
-    private fun showCompleteState(transaction: Transaction) {
-        resetState()
-
-        MaterialAlertDialogBuilder(requireContext())
-            .buildSimpleDialog(
-                getString(R.string.transaction_complete_title),
-                getString(
-                    R.string.transaction_complete_message,
-                    transaction.amount,
-                    transaction.recipientPhone
-                )
-            )
-            .setPositiveButton(getString(R.string.transaction_positive_action)) { dialog, _ ->
-                dialog.dismiss()
-            }.show()
+    private fun showFinishState(dialog: TransactionDialog) {
+        if (dialog is TransactionDialog.Complete) {
+            resetState()
+        }
+        requireContext().showDialog(dialog.data)
     }
 
     private fun resetState() {
@@ -241,27 +211,12 @@ class MainFragment : Fragment() {
         }
     }
 
-    private fun showErrorState(errorType: ErrorType) {
-        MaterialAlertDialogBuilder(requireContext())
-            .buildSimpleDialog(
-                getString(errorType.title),
-                getString(errorType.message)
-            ).setPositiveButton(getString(R.string.error_positive_button)) { _, _ ->
-                viewModel.onTryAgain()
-            }.show()
+    private fun showErrorState(errorDialog: ErrorDialog) {
+        requireContext().showDialog(errorDialog.data)
     }
     // endregion
 
     // region - Helpers
-    private fun MaterialAlertDialogBuilder.buildSimpleDialog(
-        title: String,
-        message: String
-    ): MaterialAlertDialogBuilder {
-        return setCancelable(false)
-            .setTitle(title)
-            .setMessage(message)
-    }
-
     private fun TextInputLayout.hideErrorIfNotEmpty() {
         if (text.isNotBlank()) {
             isErrorEnabled = false
@@ -275,12 +230,6 @@ class MainFragment : Fragment() {
         } else {
             isErrorEnabled = false
         }
-    }
-
-    private fun View.hideKeyboard() {
-        val imm =
-            requireActivity().getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(windowToken, 0)
     }
     // endregion
 }
